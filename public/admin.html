@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Programming Contest System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .sidebar {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .sidebar .nav-link {
+            color: rgba(255, 255, 255, 0.8);
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin: 5px 10px;
+            transition: all 0.3s ease;
+        }
+        .sidebar .nav-link:hover,
+        .sidebar .nav-link.active {
+            color: white;
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+        .main-content {
+            padding: 30px;
+        }
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            margin-bottom: 20px;
+        }
+        .card-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px 15px 0 0 !important;
+            border: none;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+        }
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+        }
+        .table-hover tbody tr:hover {
+            background-color: rgba(102, 126, 234, 0.1);
+        }
+        .user-info {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            padding: 15px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-3 col-lg-2 sidebar p-0">
+                <div class="p-3">
+                    <h4 class="text-center mb-4">Admin Panel</h4>
+                    <nav class="nav flex-column">
+                        <a class="nav-link active" href="#" onclick="showSection('contests')">
+                            <i class="bi bi-trophy me-2"></i>Contests
+                        </a>
+                        <a class="nav-link" href="#" onclick="showSection('problems')">
+                            <i class="bi bi-code-square me-2"></i>Problems
+                        </a>
+                        <a class="nav-link" href="#" onclick="showSection('submissions')">
+                            <i class="bi bi-file-text me-2"></i>Submissions
+                        </a>
+                    </nav>
+                </div>
+                <div class="user-info">
+                    <small><i class="bi bi-person-circle me-2"></i><span id="currentUser"></span></small><br>
+                    <a href="#" onclick="logout()" class="text-white text-decoration-none">
+                        <small><i class="bi bi-box-arrow-right me-1"></i>Logout</small>
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Main Content -->
+            <div class="col-md-9 col-lg-10 main-content">
+                <!-- Contests Section -->
+                <div id="contestsSection" class="content-section">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h2>Contest Management</h2>
+                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#contestModal">
+                            <i class="bi bi-plus-circle me-2"></i>Add Contest
+                        </button>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Title</th>
+                                            <th>Start Time</th>
+                                            <th>End Time</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="contestsTable">
+                                        <!-- Contests will be loaded here -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Problems Section -->
+                <div id="problemsSection" class="content-section" style="display: none;">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h2>Problem Management</h2>
+                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#problemModal">
+                            <i class="bi bi-plus-circle me-2"></i>Add Problem
+                        </button>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label for="contestSelect" class="form-label">Select Contest</label>
+                                <select class="form-select" id="contestSelect" onchange="loadProblems()">
+                                    <option value="">Choose a contest...</option>
+                                </select>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Title</th>
+                                            <th>Points</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="problemsTable">
+                                        <!-- Problems will be loaded here -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Submissions Section -->
+                <div id="submissionsSection" class="content-section" style="display: none;">
+                    <h2 class="mb-4">Submissions Overview</h2>
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>User</th>
+                                            <th>Problem</th>
+                                            <th>Contest</th>
+                                            <th>Status</th>
+                                            <th>Submitted</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="submissionsTable">
+                                        <!-- Submissions will be loaded here -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contest Modal -->
+    <div class="modal fade" id="contestModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add New Contest</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="contestForm">
+                        <div class="mb-3">
+                            <label for="contestTitle" class="form-label">Title</label>
+                            <input type="text" class="form-control" id="contestTitle" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="contestDescription" class="form-label">Description</label>
+                            <textarea class="form-control" id="contestDescription" rows="3"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="startTime" class="form-label">Start Time</label>
+                            <input type="datetime-local" class="form-control" id="startTime" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="endTime" class="form-label">End Time</label>
+                            <input type="datetime-local" class="form-control" id="endTime" required>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="addContest()">Add Contest</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Problem Modal -->
+    <div class="modal fade" id="problemModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add New Problem</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="problemForm">
+                        <div class="mb-3">
+                            <label for="problemContest" class="form-label">Contest</label>
+                            <select class="form-select" id="problemContest" required>
+                                <option value="">Select a contest...</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="problemTitle" class="form-label">Title</label>
+                            <input type="text" class="form-control" id="problemTitle" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="problemDescription" class="form-label">Description</label>
+                            <textarea class="form-control" id="problemDescription" rows="5" required></textarea>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="inputFormat" class="form-label">Input Format</label>
+                                    <textarea class="form-control" id="inputFormat" rows="3"></textarea>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="outputFormat" class="form-label">Output Format</label>
+                                    <textarea class="form-control" id="outputFormat" rows="3"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="sampleInput" class="form-label">Sample Input</label>
+                                    <textarea class="form-control" id="sampleInput" rows="3"></textarea>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="sampleOutput" class="form-label">Sample Output</label>
+                                    <textarea class="form-control" id="sampleOutput" rows="3"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="problemPoints" class="form-label">Points</label>
+                            <input type="number" class="form-control" id="problemPoints" value="100" min="1">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="addProblem()">Add Problem</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let currentUser = null;
+        
+        // Check authentication
+        async function checkAuth() {
+            try {
+                const response = await fetch('/api/current-user');
+                const user = await response.json();
+                
+                if (!user || user.role !== 'admin') {
+                    window.location.href = '/';
+                    return;
+                }
+                
+                currentUser = user;
+                document.getElementById('currentUser').textContent = user.username;
+                loadContests();
+                loadContestSelects();
+            } catch (error) {
+                window.location.href = '/';
+            }
+        }
+        
+        // Load contests
+        async function loadContests() {
+            try {
+                const response = await fetch('/api/contests');
+                const contests = await response.json();
+                
+                const tbody = document.getElementById('contestsTable');
+                tbody.innerHTML = '';
+                
+                contests.forEach(contest => {
+                    const row = `
+                        <tr>
+                            <td>${contest.title}</td>
+                            <td>${new Date(contest.start_time).toLocaleString()}</td>
+                            <td>${new Date(contest.end_time).toLocaleString()}</td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-primary" onclick="viewContestProblems(${contest.contest_id})">
+                                    <i class="bi bi-eye"></i> View Problems
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                    tbody.innerHTML += row;
+                });
+            } catch (error) {
+                console.error('Error loading contests:', error);
+            }
+        }
+        
+        // Load contest selects
+        async function loadContestSelects() {
+            try {
+                const response = await fetch('/api/contests');
+                const contests = await response.json();
+                
+                const contestSelect = document.getElementById('contestSelect');
+                const problemContest = document.getElementById('problemContest');
+                
+                contests.forEach(contest => {
+                    contestSelect.innerHTML += `<option value="${contest.contest_id}">${contest.title}</option>`;
+                    problemContest.innerHTML += `<option value="${contest.contest_id}">${contest.title}</option>`;
+                });
+            } catch (error) {
+                console.error('Error loading contests:', error);
+            }
+        }
+        
+        // Load problems for selected contest
+        async function loadProblems() {
+            const contestId = document.getElementById('contestSelect').value;
+            if (!contestId) return;
+            
+            try {
+                const response = await fetch(`/api/contests/${contestId}/problems`);
+                const problems = await response.json();
+                
+                const tbody = document.getElementById('problemsTable');
+                tbody.innerHTML = '';
+                
+                problems.forEach(problem => {
+                    const row = `
+                        <tr>
+                            <td>${problem.title}</td>
+                            <td>${problem.points}</td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-info">
+                                    <i class="bi bi-pencil"></i> Edit
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                    tbody.innerHTML += row;
+                });
+            } catch (error) {
+                console.error('Error loading problems:', error);
+            }
+        }
+        
+        // Add contest
+        async function addContest() {
+            const title = document.getElementById('contestTitle').value;
+            const description = document.getElementById('contestDescription').value;
+            const startTime = document.getElementById('startTime').value;
+            const endTime = document.getElementById('endTime').value;
+            
+            if (!title || !startTime || !endTime) {
+                alert('Please fill in all required fields');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/contests', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ title, description, start_time: startTime, end_time: endTime })
+                });
+                
+                if (response.ok) {
+                    bootstrap.Modal.getInstance(document.getElementById('contestModal')).hide();
+                    document.getElementById('contestForm').reset();
+                    loadContests();
+                    loadContestSelects();
+                    alert('Contest added successfully!');
+                } else {
+                    alert('Error adding contest');
+                }
+            } catch (error) {
+                alert('Server error');
+            }
+        }
+        
+        // Add problem
+        async function addProblem() {
+            const contestId = document.getElementById('problemContest').value;
+            const title = document.getElementById('problemTitle').value;
+            const description = document.getElementById('problemDescription').value;
+            const inputFormat = document.getElementById('inputFormat').value;
+            const outputFormat = document.getElementById('outputFormat').value;
+            const sampleInput = document.getElementById('sampleInput').value;
+            const sampleOutput = document.getElementById('sampleOutput').value;
+            const points = document.getElementById('problemPoints').value;
+            
+            if (!contestId || !title || !description) {
+                alert('Please fill in all required fields');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/problems', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contest_id: contestId,
+                        title,
+                        description,
+                        input_format: inputFormat,
+                        output_format: outputFormat,
+                        sample_input: sampleInput,
+                        sample_output: sampleOutput,
+                        points
+                    })
+                });
+                
+                if (response.ok) {
+                    bootstrap.Modal.getInstance(document.getElementById('problemModal')).hide();
+                    document.getElementById('problemForm').reset();
+                    loadProblems();
+                    alert('Problem added successfully!');
+                } else {
+                    alert('Error adding problem');
+                }
+            } catch (error) {
+                alert('Server error');
+            }
+        }
+        
+        // View contest problems
+        function viewContestProblems(contestId) {
+            document.getElementById('contestSelect').value = contestId;
+            showSection('problems');
+            loadProblems();
+        }
+        
+        // Show section
+        function showSection(section) {
+            // Hide all sections
+            document.querySelectorAll('.content-section').forEach(sec => {
+                sec.style.display = 'none';
+            });
+            
+            // Remove active class from all nav links
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('active');
+            });
+            
+            // Show selected section
+            document.getElementById(section + 'Section').style.display = 'block';
+            
+            // Add active class to clicked nav link
+            event.target.closest('.nav-link').classList.add('active');
+        }
+        
+        // Logout
+        async function logout() {
+            try {
+                await fetch('/api/logout', { method: 'POST' });
+                window.location.href = '/';
+            } catch (error) {
+                console.error('Logout error:', error);
+            }
+        }
+        
+        // Initialize
+        checkAuth();
+    </script>
+
+    <script>
+async function loadSubmissions() {
+    try {
+        // This calls the code you wrote in app.js
+        const response = await fetch('/api/admin/all-submissions');
+        const data = await response.json();
+        
+        const tableBody = document.getElementById('submissionsTable');
+        tableBody.innerHTML = ''; // Clear the "Loading..." text
+
+        data.forEach(sub => {
+            const row = `
+                <tr>
+                    <td>${sub.username || 'User'}</td>
+                    <td>${sub.problem_title || 'N/A'}</td>
+                    <td>${sub.contest_title || 'N/A'}</td>
+                    <td><span class="badge bg-primary">${sub.status}</span></td>
+                    <td>${new Date(sub.submitted_at).toLocaleDateString()}</td>
+                </tr>
+            `;
+            tableBody.innerHTML += row;
+        });
+    } catch (err) {
+        console.error("Failed to load submissions", err);
+    }
+}
+
+// Automatically load when the page opens
+window.onload = loadSubmissions;
+</script>
+
+</body>
+</html>

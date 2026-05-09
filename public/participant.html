@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Participant Dashboard - Programming Contest System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/monokai.min.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .navbar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .navbar-brand {
+            color: white !important;
+            font-weight: 600;
+        }
+        .nav-link {
+            color: rgba(255, 255, 255, 0.8) !important;
+        }
+        .nav-link:hover {
+            color: white !important;
+        }
+        .main-content {
+            padding: 30px;
+        }
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            margin-bottom: 20px;
+        }
+        .card-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px 15px 0 0 !important;
+            border: none;
+        }
+        .contest-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            cursor: pointer;
+        }
+        .contest-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+        }
+        .contest-status {
+            font-size: 0.9rem;
+            padding: 5px 10px;
+            border-radius: 20px;
+        }
+        .status-upcoming {
+            background-color: #ffc107;
+            color: #000;
+        }
+        .status-running {
+            background-color: #28a745;
+            color: white;
+        }
+        .status-ended {
+            background-color: #6c757d;
+            color: white;
+        }
+        .code-editor {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .CodeMirror {
+            height: 400px;
+            font-size: 14px;
+        }
+        .submission-status {
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        .status-pending { background-color: #ffc107; }
+        .status-accepted { background-color: #28a745; color: white; }
+        .status-wrong_answer { background-color: #dc3545; color: white; }
+        .status-time_limit_exceeded { background-color: #fd7e14; color: white; }
+        .status-memory_limit_exceeded { background-color: #6f42c1; color: white; }
+        .status-compilation_error { background-color: #e83e8c; color: white; }
+        .problem-description {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .sample-code {
+            background-color: #2d3748;
+            color: #e2e8f0;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">
+                <i class="bi bi-trophy me-2"></i>Programming Contest System
+            </a>
+            <div class="navbar-nav ms-auto">
+                <span class="navbar-text me-3">
+                    <i class="bi bi-person-circle me-1"></i>
+                    <span id="currentUser"></span>
+                </span>
+                <a class="nav-link" href="#" onclick="logout()">
+                    <i class="bi bi-box-arrow-right"></i> Logout
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container-fluid main-content">
+        <!-- Contests Section -->
+        <div id="contestsSection" class="content-section">
+            <h2 class="mb-4">Available Contests</h2>
+            <div class="row" id="contestsGrid">
+                <!-- Contests will be loaded here -->
+            </div>
+        </div>
+
+        <!-- Contest Details Section -->
+        <div id="contestDetailsSection" class="content-section" style="display: none;">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 id="contestTitle"></h2>
+                <button class="btn btn-outline-primary" onclick="showContests()">
+                    <i class="bi bi-arrow-left me-2"></i>Back to Contests
+                </button>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">Problems</h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="problemsList">
+                                <!-- Problems will be loaded here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">Your Submissions</h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="submissionsList">
+                                <!-- Submissions will be loaded here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Problem & Submission Section -->
+        <div id="problemSection" class="content-section" style="display: none;">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 id="problemTitle"></h2>
+                <button class="btn btn-outline-primary" onclick="showContestDetails()">
+                    <i class="bi bi-arrow-left me-2"></i>Back to Contest
+                </button>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">Problem Description</h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="problemDescription">
+                                <!-- Problem description will be loaded here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">Submit Solution</h5>
+                        </div>
+                        <div class="card-body">
+                            <form id="submissionForm">
+                                <div class="mb-3">
+                                    <label for="language" class="form-label">Language</label>
+                                    <select class="form-select" id="language">
+                                        <option value="cpp">C++</option>
+                                        <option value="java">Java</option>
+                                        <option value="python">Python</option>
+                                        <option value="c">C</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="code" class="form-label">Your Code</label>
+                                    <div class="code-editor">
+                                        <textarea id="code" class="form-control" rows="15" placeholder="// Write your code here..."></textarea>
+                                    </div>
+                                </div>
+                                <button type="submit" class="btn btn-primary w-100">
+                                    <i class="bi bi-send me-2"></i>Submit Solution
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success/Error Modal -->
+    <div class="modal fade" id="messageModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="messageTitle">Message</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="messageBody">
+                    <!-- Message content -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">OK</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/clike/clike.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/python/python.min.js"></script>
+    <script>
+        let currentUser = null;
+        let currentContest = null;
+        let currentProblem = null;
+        let codeEditor = null;
+
+        // Check authentication
+        async function checkAuth() {
+            try {
+                const response = await fetch('/api/current-user');
+                const user = await response.json();
+                
+                if (!user || user.role !== 'participant') {
+                    window.location.href = '/';
+                    return;
+                }
+                
+                currentUser = user;
+                document.getElementById('currentUser').textContent = user.username;
+                loadContests();
+            } catch (error) {
+                window.location.href = '/';
+            }
+        }
+
+        // Load contests
+        async function loadContests() {
+            try {
+                const response = await fetch('/api/contests');
+                const contests = await response.json();
+                
+                const grid = document.getElementById('contestsGrid');
+                grid.innerHTML = '';
+                
+                contests.forEach(contest => {
+                    const now = new Date();
+                    const startTime = new Date(contest.start_time);
+                    const endTime = new Date(contest.end_time);
+                    
+                    let status, statusClass;
+                    if (now < startTime) {
+                        status = 'Upcoming';
+                        statusClass = 'status-upcoming';
+                    } else if (now >= startTime && now <= endTime) {
+                        status = 'Running';
+                        statusClass = 'status-running';
+                    } else {
+                        status = 'Ended';
+                        statusClass = 'status-ended';
+                    }
+                    
+                    const card = `
+                        <div class="col-md-4 mb-4">
+                            <div class="card contest-card" onclick="viewContest(${contest.contest_id})">
+                                <div class="card-body">
+                                    <h5 class="card-title">${contest.title}</h5>
+                                    <p class="card-text">${contest.description || 'No description available'}</p>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="contest-status ${statusClass}">${status}</span>
+                                        <small class="text-muted">
+                                            <i class="bi bi-clock me-1"></i>
+                                            ${new Date(contest.start_time).toLocaleDateString()}
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    grid.innerHTML += card;
+                });
+            } catch (error) {
+                console.error('Error loading contests:', error);
+            }
+        }
+
+        // View contest details
+        async function viewContest(contestId) {
+            try {
+                const response = await fetch('/api/contests');
+                const contests = await response.json();
+                currentContest = contests.find(c => c.contest_id === contestId);
+                
+                if (!currentContest) return;
+                
+                document.getElementById('contestTitle').textContent = currentContest.title;
+                
+                // Load problems
+                const problemsResponse = await fetch(`/api/contests/${contestId}/problems`);
+                const problems = await problemsResponse.json();
+                
+                const problemsList = document.getElementById('problemsList');
+                problemsList.innerHTML = '';
+                
+                problems.forEach(problem => {
+                    const problemCard = `
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <h6 class="card-title">${problem.title}</h6>
+                                <p class="card-text small text-muted">${problem.description.substring(0, 100)}...</p>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="badge bg-primary">${problem.points} points</span>
+                                    <button class="btn btn-sm btn-outline-primary" onclick="viewProblem(${problem.problem_id})">
+                                        <i class="bi bi-code me-1"></i>Solve
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    problemsList.innerHTML += problemCard;
+                });
+                
+                // Load submissions
+                loadSubmissions();
+                
+                showSection('contestDetails');
+            } catch (error) {
+                console.error('Error loading contest:', error);
+            }
+        }
+
+        // Load submissions
+        async function loadSubmissions() {
+            try {
+                const response = await fetch(`/api/submissions/${currentUser.user_id}`);
+                const submissions = await response.json();
+                
+                const submissionsList = document.getElementById('submissionsList');
+                submissionsList.innerHTML = '';
+                
+                const contestSubmissions = submissions.filter(s => s.contest_id === currentContest.contest_id);
+                
+                if (contestSubmissions.length === 0) {
+                    submissionsList.innerHTML = '<p class="text-muted">No submissions yet.</p>';
+                    return;
+                }
+                
+                contestSubmissions.forEach(submission => {
+                    const statusClass = `status-${submission.status}`;
+                    const submissionCard = `
+                        <div class="card mb-2">
+                            <div class="card-body p-3">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <strong>${submission.problem_title}</strong>
+                                        <div class="small text-muted">
+                                            ${new Date(submission.submitted_at).toLocaleString()}
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <span class="submission-status ${statusClass}">
+                                            ${submission.status.replace('_', ' ').toUpperCase()}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    submissionsList.innerHTML += submissionCard;
+                });
+            } catch (error) {
+                console.error('Error loading submissions:', error);
+            }
+        }
+
+        // View problem
+        async function viewProblem(problemId) {
+            try {
+                const response = await fetch(`/api/contests/${currentContest.contest_id}/problems`);
+                const problems = await response.json();
+                currentProblem = problems.find(p => p.problem_id === problemId);
+                
+                if (!currentProblem) return;
+                
+                document.getElementById('problemTitle').textContent = currentProblem.title;
+                
+                const description = `
+                    <div class="problem-description">
+                        <h5>Description</h5>
+                        <p>${currentProblem.description}</p>
+                        
+                        ${currentProblem.input_format ? `
+                        <h6>Input Format</h6>
+                        <p>${currentProblem.input_format}</p>
+                        ` : ''}
+                        
+                        ${currentProblem.output_format ? `
+                        <h6>Output Format</h6>
+                        <p>${currentProblem.output_format}</p>
+                        ` : ''}
+                        
+                        ${currentProblem.sample_input ? `
+                        <h6>Sample Input</h6>
+                        <div class="sample-code">${currentProblem.sample_input}</div>
+                        ` : ''}
+                        
+                        ${currentProblem.sample_output ? `
+                        <h6>Sample Output</h6>
+                        <div class="sample-code">${currentProblem.sample_output}</div>
+                        ` : ''}
+                        
+                        <div class="mt-3">
+                            <span class="badge bg-primary">Time Limit: ${currentProblem.time_limit || 1}s</span>
+                            <span class="badge bg-info">Memory Limit: ${currentProblem.memory_limit || 256}MB</span>
+                            <span class="badge bg-success">Points: ${currentProblem.points}</span>
+                        </div>
+                    </div>
+                `;
+                
+                document.getElementById('problemDescription').innerHTML = description;
+                
+                // Initialize code editor
+                if (!codeEditor) {
+                    codeEditor = CodeMirror.fromTextArea(document.getElementById('code'), {
+                        lineNumbers: true,
+                        mode: 'text/x-c++src',
+                        theme: 'monokai',
+                        indentUnit: 4,
+                        lineWrapping: true
+                    });
+                }
+                
+                // Set language mode
+                document.getElementById('language').addEventListener('change', (e) => {
+                    const mode = {
+                        'cpp': 'text/x-c++src',
+                        'c': 'text/x-csrc',
+                        'java': 'text/x-java',
+                        'python': 'text/x-python'
+                    };
+                    codeEditor.setOption('mode', mode[e.target.value] || 'text/x-c++src');
+                });
+                
+                showSection('problem');
+            } catch (error) {
+                console.error('Error loading problem:', error);
+            }
+        }
+
+        // Submit solution
+        document.getElementById('submissionForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const code = codeEditor.getValue();
+            const language = document.getElementById('language').value;
+            
+            if (!code.trim()) {
+                showMessage('Error', 'Please write your code before submitting.');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/submissions', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        problem_id: currentProblem.problem_id,
+                        contest_id: currentContest.contest_id,
+                        code: code,
+                        language: language
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showMessage('Success', 'Your solution has been submitted successfully!');
+                    // Clear the editor
+                    codeEditor.setValue('');
+                    // Reload submissions
+                    setTimeout(() => {
+                        loadSubmissions();
+                    }, 1000);
+                } else {
+                    showMessage('Error', 'Failed to submit solution. Please try again.');
+                }
+            } catch (error) {
+                showMessage('Error', 'Server error. Please try again.');
+            }
+        });
+
+        // Show message modal
+        function showMessage(title, message) {
+            document.getElementById('messageTitle').textContent = title;
+            document.getElementById('messageBody').textContent = message;
+            new bootstrap.Modal(document.getElementById('messageModal')).show();
+        }
+
+        // Show section
+        function showSection(section) {
+            // Hide all sections
+            document.querySelectorAll('.content-section').forEach(sec => {
+                sec.style.display = 'none';
+            });
+            
+            // Show selected section
+            document.getElementById(section + 'Section').style.display = 'block';
+        }
+
+        // Navigation functions
+        function showContests() {
+            showSection('contests');
+        }
+
+        function showContestDetails() {
+            showSection('contestDetails');
+        }
+
+        // Logout
+        async function logout() {
+            try {
+                await fetch('/api/logout', { method: 'POST' });
+                window.location.href = '/';
+            } catch (error) {
+                console.error('Logout error:', error);
+            }
+        }
+
+        // Initialize
+        checkAuth();
+    </script>
+</body>
+</html>
